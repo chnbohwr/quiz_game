@@ -2,6 +2,9 @@
  //  OpenShift sample Node application
 var express = require('express');
 var fs = require('fs');
+var app = require('express')();
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
 
 
 /**
@@ -33,14 +36,6 @@ var SampleApp = function () {
         };
     };
 
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function (key) {
-        return self.zcache[key];
-    };
-
 
     /**
      *  terminator === the termination handler
@@ -55,7 +50,6 @@ var SampleApp = function () {
         }
         console.log('%s: Node server stopped.', Date(Date.now()));
     };
-
 
     /**
      *  Setup termination handlers (for exit and a list of signals).
@@ -82,10 +76,10 @@ var SampleApp = function () {
      *  the handlers.
      */
     self.initializeServer = function () {
-        self.app = express();
-        var app = self.app;
-
-        app.get('/', express.static(__dirname + '/web'));
+        self.app = app;
+        self.server = server;
+        self.io = io;
+        self.app.get('/', express.static(__dirname + '/web'));
     };
 
 
@@ -105,7 +99,7 @@ var SampleApp = function () {
      */
     self.start = function () {
         //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function () {
+        self.server.listen(self.port, self.ipaddress, function () {
             console.log('%s: Node server started on %s:%d ...',
                 Date(Date.now()), self.ipaddress, self.port);
         });
