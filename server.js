@@ -4,7 +4,8 @@ var express = require('express');
 var fs = require('fs');
 var app = require('express')();
 var server = require('http').Server(app);
-var io = require('socket.io')(server);
+//open shift only allow websocket in port 8000
+var io = require('socket.io')(8000);
 
 
 /**
