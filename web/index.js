@@ -30,10 +30,9 @@ var GAME = function (io) {
     var self = this;
     self.io = io;
     var socket = io.connect();
-    socket.on('login-success', function (data) {
-        console.log('login success');
+    socket.on('test', function (data) {
+        console.log('recive test message', data.message);
     });
-
 
     self.login = function () {
 

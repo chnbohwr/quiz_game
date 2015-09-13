@@ -76,12 +76,23 @@ var SampleApp = function () {
      *  the handlers.
      */
     self.initializeServer = function () {
-        self.app = app;
-        self.server = server;
-        self.io = io;
-        self.app.get('/', express.static(__dirname + '/web'));
+        app.use('/', express.static(__dirname + '/web/'));
     };
 
+    self.initializeSocket = function () {
+        
+        io.on('connection', function (socket) {
+            console.log('socket connect');    
+        });
+        
+        //setinterval to test socket
+        setInterval(function () {
+            io.emit('test', {
+                message: 'it is a test message' + new Date()
+            });
+        }, 1000);
+
+    };
 
     /**
      *  Initializes the sample application.
@@ -91,6 +102,7 @@ var SampleApp = function () {
         self.setupTerminationHandlers();
         // Create the express server and routes.
         self.initializeServer();
+        self.initializeSocket();
     };
 
 
@@ -99,7 +111,7 @@ var SampleApp = function () {
      */
     self.start = function () {
         //  Start the app on the specific interface (and port).
-        self.server.listen(self.port, self.ipaddress, function () {
+        server.listen(self.port, self.ipaddress, function () {
             console.log('%s: Node server started on %s:%d ...',
                 Date(Date.now()), self.ipaddress, self.port);
         });
