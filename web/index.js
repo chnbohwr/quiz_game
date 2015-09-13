@@ -29,7 +29,7 @@ window.fbAsyncInit = function () {
 var GAME = function (io) {
     var self = this;
     self.io = io;
-    var socket = io.connect('http://know-chnbohwr.rhcloud.com:8000');
+    var socket = io.connect();
     socket.on('test', function (data) {
         console.log('recive test message', data.message);
     });
