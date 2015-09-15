@@ -175,7 +175,7 @@ var GAME = function () {
     }
 
     function receiveAnswer(data) {
-        console.log('answer:' + data.a + '. ' + data.t);
+        console.log('answer:' + (data.a + 1) + '. ' + data.t);
     }
 
     socket.on('chat', receiveMessage);
