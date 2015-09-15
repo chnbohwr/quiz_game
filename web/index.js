@@ -7,8 +7,12 @@ var GAME = function () {
     var self = this;
     var io = window.io;
     var FB = window.FB;
-    var socket = io.connect('http://know-chnbohwr.rhcloud.com:8000')
-//    var socket = io.connect();
+    var socket
+    if (location.host === 'know-chnbohwr.rhcloud.com') {
+        socket = io.connect('http://know-chnbohwr.rhcloud.com:8000')
+    } else {
+        socket = io.connect();
+    }
     var login_status = {
         facebook: false,
         game: false
@@ -97,15 +101,6 @@ var GAME = function () {
     }
 
     /**
-     * @function receiveQuestion
-     * get question by socket.io
-     * @param {Object} data todo define question data
-     */
-    function receiveQuestion(data) {
-        console.log(data);
-    }
-
-    /**
      * @function answerQuestion
      * input ansewr data to server 
      * @param {Number} ans which answer 
@@ -172,13 +167,25 @@ var GAME = function () {
         }
     }
 
+    function receiveQuestion(data) {
+        console.log('question:' + data.q);
+        for (var i = 1; i < 5; i++) {
+            console.log(i + '. ' + data.o[i - 1]);
+        }
+    }
+
+    function receiveAnswer(data) {
+        console.log('answer:' + data.a + '. ' + data.t);
+    }
+
     socket.on('chat', receiveMessage);
-    socket.on('question', receiveQuestion);
     socket.on('onlineUsers', receiveOnlineUsers);
     socket.on('loginSuccess', loginSuccess);
     socket.on('loginError', loginError);
     socket.on('userLogin', userLogin);
     socket.on('userLogout', userLogout);
+    socket.on('question', receiveQuestion);
+    socket.on('answer', receiveAnswer);
 };
 
 /**

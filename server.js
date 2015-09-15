@@ -83,7 +83,6 @@ var SampleApp = function () {
     self.initializeSocket = function () {
         var sc = new SocketConnection(io);    
     };
-
     
     /**
      *  Initializes the sample application.

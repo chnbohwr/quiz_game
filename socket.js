@@ -1,3 +1,7 @@
+var fs = require('fs');
+var quiz = JSON.parse(fs.readFileSync('quiz.json', 'utf-8'));
+var quiz_length = quiz.length;
+var now_quiz;
 /**
  * @class SocketConnection
  * @param {Object} io require io and create server by express 
@@ -12,7 +16,7 @@ module.exports = function (io) {
         console.log('socket connect', socket.id);
         online_user[socket.id] = socket;
         sendOnlineUsers();
-        
+
         //receive disconnection data 
         socket.on('disconnect', function () {
             console.log('Got disconnect!', socket.id);
@@ -20,7 +24,7 @@ module.exports = function (io) {
 
             //delete facebook id when logout 
             if (socket.fb_user) {
-                io.emit('userLogout',socket.fb_user);
+                io.emit('userLogout', socket.fb_user);
                 var index = online_user_fb_id.indexOf(socket.fb_user.id);
                 if (index > -1) {
                     online_user_fb_id.splice(index, 1);
@@ -37,7 +41,7 @@ module.exports = function (io) {
                 online_user_fb_id.push(data.id);
                 //send success message
                 socket.emit('loginSuccess');
-                io.emit('userLogin',data);
+                io.emit('userLogin', data);
             } else {
                 //send login error message
                 socket.emit('loginError', {
@@ -55,7 +59,7 @@ module.exports = function (io) {
             io.emit('chat', data);
         });
 
-        
+
         function sendOnlineUsers() {
             var online_user_list = [];
 
@@ -72,4 +76,37 @@ module.exports = function (io) {
             });
         }
     });
+
+    function askQuestion() {
+        //random question
+        now_quiz = quiz[parseInt(Math.random() * quiz.length)];
+        //random answer
+        now_quiz.a = parseInt(Math.random() * 4);
+
+        for (var i = 0; i < now_quiz.a; i++) {
+            now_quiz.o.unshift(now_quiz.o.pop());
+        }
+
+        //console.log(now_quiz);
+
+        var send_data = {
+            q: now_quiz.q,
+            o: now_quiz.o
+        }
+
+        io.emit('question', send_data);
+        setTimeout(giveAnswer,10*1000);
+    }
+
+    
+    function giveAnswer() {
+        io.emit('answer', {
+            a: now_quiz.a,
+            t: now_quiz.o[now_quiz.a]
+        });
+        //todo caculate user point
+        askQuestion();
+    }
+    
+    askQuestion();
 };
