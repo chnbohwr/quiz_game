@@ -7,23 +7,31 @@ var GAME = function () {
     var self = this;
     var io = window.io;
     var FB = window.FB;
-    var socket
+    var socket, now_quiz, myanswer,online_users;
+    //回答的人
+    var answer_user = [];
+
+    //look if the location is product or developement
     if (location.host === 'know-chnbohwr.rhcloud.com') {
         socket = io.connect('http://know-chnbohwr.rhcloud.com:8000')
     } else {
         socket = io.connect();
     }
+
+    //make login status object
     var login_status = {
         facebook: false,
         game: false
     };
 
+    //initial facebook
     FB.init({
         appId: '1633361533588392',
         xfbml: true,
         version: 'v2.4'
     });
 
+    //login facebook in game
     self.login = function () {
         //get login status 
         FB.getLoginStatus(function (response) {
@@ -41,34 +49,6 @@ var GAME = function () {
             }
         });
 
-        /**
-         * loginFBsccess
-         * download profile and friend list to server
-         */
-        function loginFBSuccess() {
-            //success login facebook
-            //get user data, get user friends
-            FB.api('/me', function (response) {
-                if (response && !response.error) {
-                    self.user_profile = response;
-                    //use socket id to login socket.io
-                    socket.emit('login', response);
-                }
-            });
-
-            FB.api("/me/friends", function (response) {
-                if (response && !response.error) {
-                    self.user_friends = response.data;
-                }
-            });
-
-            FB.api("/me/picture", function (response) {
-                if (response && !response.error) {
-                    self.user_picture = response.data.url;
-                }
-            });
-        }
-
     }; //end self.login
 
     /**
@@ -79,6 +59,43 @@ var GAME = function () {
     self.getLoginStatus = function () {
         return login_status;
     };
+    
+    self.getOnlineUsers = function(){
+        console.log(online_users);
+    };
+
+    /**
+     * loginFBsccess
+     * download profile and friend list to server
+     */
+    function loginFBSuccess() {
+        //success login facebook
+        //get user data, get user friends
+        FB.api('/me', function (response) {
+            if (response && !response.error) {
+                self.user_profile = response;
+                FB.api("/me/picture", function (r) {
+                    if (r && !r.error) {
+                        response.avatar = r.data.url;
+                        //use socket id to login socket.io
+                        socket.emit('login', response);
+                    }
+                });
+            }
+        });
+
+        FB.api("/me/friends", function (response) {
+            if (response && !response.error) {
+                self.user_friends = response.data;
+            }
+        });
+
+        FB.api("/me/picture", function (response) {
+            if (response && !response.error) {
+                self.user_picture = response.data.url;
+            }
+        });
+    }
 
     /**
      * @function sendMessage
@@ -101,23 +118,12 @@ var GAME = function () {
     }
 
     /**
-     * @function answerQuestion
-     * input ansewr data to server 
-     * @param {Number} ans which answer 
-     */
-    function answerQuestion(ans) {
-        socket.emit('ans', {
-            ans: ans
-        });
-    }
-
-    /**
      * @function receiveOnlineUsers
      * receive online user list in data.data
      * @param {Object} data userdata
      */
     function receiveOnlineUsers(data) {
-        self.online_users = data.data;
+        online_users = data;
     };
 
     /**
@@ -129,6 +135,7 @@ var GAME = function () {
         login_status.game = true;
         //open function in game class
         self.chat = sendMessage;
+        self.answer = answer;
     }
 
     /**
@@ -146,8 +153,9 @@ var GAME = function () {
      * @param {[[Type]]} data [[Description]]
      */
     function userLogin(data) {
-        if (self.online_users) {
-            self.online_users.push(data);
+        console.log('玩家: ' + data.name + ' 登入遊戲');
+        if (online_users) {
+            online_users.push(data);
         }
     }
 
@@ -157,25 +165,102 @@ var GAME = function () {
      * @param {Object} data [[Description]]
      */
     function userLogout(data) {
-        if (self.online_users) {
-            for (var i in self.online_users) {
-                if (self.online_users[i].id === data.id) {
-                    self.online_users.splice(i, 1);
+        if (online_users) {
+            for (var i in online_users) {
+                if (online_users[i].id === data.facebook_id) {
+                    console.log('玩家: ' + online_users[i].name + ' 離開遊戲');
+                    online_users.splice(i, 1);
                     break;
                 }
             }
         }
     }
 
+    /**
+     * @function receiveQuestion
+     * get question by server 
+     * @param {Object} data [[Description]]
+     */
     function receiveQuestion(data) {
         console.log('question:' + data.q);
+        now_quiz = data;
         for (var i = 1; i < 5; i++) {
             console.log(i + '. ' + data.o[i - 1]);
         }
     }
 
+    /**
+     * @function receiveAnswer
+     * get answer by server 
+     * @param {Object} data [[Description]]
+     */
     function receiveAnswer(data) {
-        console.log('answer:' + (data.a + 1) + '. ' + data.t);
+
+        console.log('正確解答:' + data.a);
+
+        //計算所有人成績
+        for (var i in answer_user) {
+            var ans_object = answer_user[i];
+            if (ans_object.answer === data.a) {
+                var user = getUserData(ans_object.facebook_id);
+                user.score += 1;
+            }
+        }
+
+        if (myanswer === data.a) {
+            console.log('答對了');
+        }
+
+        //clear data
+        myanswer = undefined;
+        now_quiz = undefined;
+        answer_user = [];
+    }
+
+
+    /**
+     * @function answer
+     * 回答問題
+     * @param {Number} number 選擇正確的題號
+     */
+    function answer(number) {
+        if (!now_quiz) {
+            console.log('現在不是回答時間')
+            return;
+        }
+
+        //放到變數 myanswer
+        myanswer = number;
+        var data = {
+            uuid: now_quiz.uuid,
+            answer: number
+        }
+        socket.emit('selectAnswer', data);
+    }
+
+    /**
+     * @function userSelectAnswer
+     * 線上的使用者選擇答案
+     * @param {Object} data data.facebook_id,data.answer
+     */
+    function userSelectAnswer(data) {
+        answer_user.push(data);
+        var user = getUserData(data.facebook_id);
+        console.log(user.name + '選擇答案:' + data.answer);
+    }
+
+    /**
+     * @function getUserData
+     * facebook_id 找到使用者的資料
+     * @param   {String} facebook_id 
+     * @returns {Object} user data
+     */
+    function getUserData(facebook_id) {
+        for (var i in online_users) {
+            if (online_users[i].id === facebook_id) {
+                return online_users[i];
+            }
+        }
     }
 
     socket.on('chat', receiveMessage);
@@ -184,8 +269,9 @@ var GAME = function () {
     socket.on('loginError', loginError);
     socket.on('userLogin', userLogin);
     socket.on('userLogout', userLogout);
-    socket.on('question', receiveQuestion);
-    socket.on('answer', receiveAnswer);
+    socket.on('server_question', receiveQuestion);
+    socket.on('server_answer', receiveAnswer);
+    socket.on('userSelectAnswer', userSelectAnswer);
 };
 
 /**
