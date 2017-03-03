@@ -41,8 +41,10 @@ const sendNowQuestion = (socket) => {
   socket.emit('server_question', sendData);
 };
 
-const findUserByFBId = (userSocketId) => {
+const findUserBySocketId= (userSocketId) => {
+  console.log('show online user list', onlineUserList);
   let userData = onlineUserList.find(userObj => userObj.socket_id === userSocketId);
+
   if (!userData) {
     userData = {
       id: 0,
@@ -87,6 +89,7 @@ module.exports = (io) => {
 
     // receive login data
     socket.on('login', (data) => {
+      console.log('get user login data', data);
       // 找看看有沒有重複登入
       const hasLoginList = onlineUserList.filter(userObj => data.id === userObj.id);
 
@@ -144,7 +147,7 @@ module.exports = (io) => {
     socket.on('chat', (data) => {
       const chatData = Object.assign({}, data);
       chatData.datetime = new Date();
-      chatData.name = findUserByFBId(socket.id).name;
+      chatData.name = findUserBySocketId(socket.id).name;
       io.emit('chat', chatData);
     });
 
@@ -170,11 +173,14 @@ module.exports = (io) => {
         return;
       }
 
+      
       // caculate user score
       if (data.answer === nowQuiz.a) {
-        const user = findUserByFBId(socket.facebook_id);
+        const user = findUserBySocketId(socket.id);
         user.score += 1;
+        console.log(user);
       }
+      
 
       // 告訴大家他選了什麼答案
       io.emit('userSelectAnswer', {
@@ -204,7 +210,7 @@ module.exports = (io) => {
   function askQuestion() {
     // random question
     const choosedQuestion = quiz[Math.floor(Math.random() * quiz.length)];
-    console.log('choosedQuestion', choosedQuestion);
+    //console.log('choosedQuestion', choosedQuestion);
 
     nowQuiz = Object.assign({}, choosedQuestion);
     // random answer(1,2,3,4)
@@ -229,7 +235,7 @@ module.exports = (io) => {
       uuid: nowQuiz.uuid,
     };
 
-    console.log('nowQuiz', nowQuiz);
+    //console.log('nowQuiz', nowQuiz);
 
     // 發送問題給每個使用者
     io.emit('server_question', questionData);
@@ -240,3 +246,4 @@ module.exports = (io) => {
 
   askQuestion();
 };
+// can not use control  i am so sad....
