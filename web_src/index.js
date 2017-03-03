@@ -12,7 +12,7 @@ var GAME = function () {
     var answer_user = [];
 
     //look if the location is product or developement
-    socket.io.connect();
+    socket = io.connect();
 
     //make login status object
     var login_status = {
