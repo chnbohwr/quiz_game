@@ -6,7 +6,7 @@ var app = require('express')();
 var server = require('http').Server(app);
 //open shift only allow websocket in port 8000
 var io = require('socket.io')(server);
-var SocketConnection = require('./socket.js');
+var gameSocket = require('./server_src/socket.js');
 
 /**
  *  Define the sample application.
@@ -77,11 +77,11 @@ var SampleApp = function () {
      *  the handlers.
      */
     self.initializeServer = function () {
-        app.use('/', express.static(__dirname + '/web/'));
+        app.use('/', express.static(__dirname + '/web_src/'));
     };
 
     self.initializeSocket = function () {
-        var sc = new SocketConnection(io);    
+        gameSocket(io);
     };
     
     /**
