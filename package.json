@@ -1,31 +1,8 @@
 {
-  "name": "OpenShift-Sample-App",
+  "name": "quiz_game",
   "version": "1.0.0",
-  "description": "OpenShift Sample Application",
-  "keywords": [
-    "OpenShift",
-    "Node.js",
-    "application",
-    "openshift"
-  ],
-  "scripts": {
-    "lint": "eslint ./server_src",
-    "start": "node server.js"
-  },
-  "author": {
-    "name": "OpenShift",
-    "email": "ramr@example.org",
-    "url": "http://www.openshift.com/"
-  },
-  "homepage": "http://www.openshift.com/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/openshift/origin-server"
-  },
-  "engines": {
-    "node": ">= 0.6.0",
-    "npm": ">= 1.0.0"
-  },
+  "description": "a nodejs web socket quiz game",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.13.3",
     "node-uuid": "^1.4.3",
@@ -38,7 +15,19 @@
     "eslint-plugin-jsx-a11y": "^4.0.0",
     "eslint-plugin-react": "^6.10.0"
   },
-  "bundleDependencies": [],
-  "private": true,
-  "main": "server.js"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "lint": "eslint ./server_src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chnbohwr/quiz_game.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chnbohwr/quiz_game/issues"
+  },
+  "homepage": "https://github.com/chnbohwr/quiz_game#readme"
 }
