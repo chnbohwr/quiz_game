@@ -98,6 +98,7 @@ module.exports = (io) => {
         // 把facebook 資訊放到 socket 裡面
         userData.socket_id = socket.id;
         userData.facebook_id = data.id;
+        socket.facebook_id = data.id;
         // 把使用者放的 onlineUserList 裡面
         onlineUserList.push(userData);
         // 告訴自己登入成功
@@ -113,6 +114,30 @@ module.exports = (io) => {
       }
     });
     // on login end.
+
+
+    /**
+     * fake login
+     * data = { name: 'xxxx' }
+     */
+    socket.on('fakeLogin', (data) => {
+      const fbid = uuid.v4();
+      const userData = {
+        id: fbid,
+        socket_id: socket.id,
+        facebook_id: fbid,
+        name: data.name,
+        score: 0,
+        high_score: 0,
+      };
+
+      onlineUserList.push(userData);
+
+      // 告訴自己登入成功
+      socket.emit('loginSuccess', userData);
+      // 告訴大家有使用者登入
+      io.emit('userLogin', userData);
+    });
 
     // receive chat data
     // {
