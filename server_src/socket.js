@@ -94,7 +94,6 @@ module.exports = (io) => {
         const userData = Object.assign({}, data);
         // 先初始化的分數跟最高分
         userData.score = 0;
-        userData.high_score = 0;
         // 把facebook 資訊放到 socket 裡面
         userData.socket_id = socket.id;
         userData.facebook_id = data.id;
@@ -128,7 +127,6 @@ module.exports = (io) => {
         facebook_id: fbid,
         name: data.name,
         score: 0,
-        high_score: 0,
       };
 
       onlineUserList.push(userData);
