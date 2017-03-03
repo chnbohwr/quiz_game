@@ -12,11 +12,7 @@ var GAME = function () {
     var answer_user = [];
 
     //look if the location is product or developement
-    if (location.host === 'know-chnbohwr.rhcloud.com') {
-        socket = io.connect('http://know-chnbohwr.rhcloud.com:8000')
-    } else {
-        socket = io.connect();
-    }
+    socket.io.connect();
 
     //make login status object
     var login_status = {
@@ -26,9 +22,9 @@ var GAME = function () {
 
     //initial facebook
     FB.init({
-        appId: '1633361533588392',
-        xfbml: true,
-        version: 'v2.4'
+      appId      : '1633361533588392',
+      xfbml      : true,
+      version    : 'v2.8'
     });
 
     //login facebook in game
