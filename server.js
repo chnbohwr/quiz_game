@@ -13,13 +13,30 @@ const port = process.env.PORT || 8080;
 
 // create express app
 const app = express();
+
+app.get('/hello', (req, res) => res.send({ hi: 'there' }));
+
+// set static folder
+if (process.env.NODE_ENV !== 'production') {
+  const webpackMiddleware = require('webpack-dev-middleware');
+  const webpack = require('webpack');
+  const webpackConfig = require('./webpack.config.dev');
+  app.use(webpackMiddleware(webpack(webpackConfig)));
+} else {
+  app.use(express.static('dist'));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist/index.html'));
+  });
+}
+// app.use('/', express.static(path.join(__dirname, 'web_src')));
+
+
+
 const server = http.Server(app);
 
 // create socket io server
 const io = socketIO(server);
 
-// set static folder
-app.use('/', express.static(path.join(__dirname, 'web_src')));
 
 // run http server
 server.listen(port, () => {

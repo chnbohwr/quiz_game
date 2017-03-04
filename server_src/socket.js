@@ -60,6 +60,8 @@ const findUserByFBId = (userSocketId) => {
 module.exports = (io) => {
   // when connect
   io.on('connection', (socket) => {
+    console.log('a user connected');
+
     // 把 socket 放到 onlineSocketList 列表裡面
     onlineSocketList.push(socket);
     // 當使用者連線以後先給予目前的線上使用者跟目前問題
@@ -68,6 +70,7 @@ module.exports = (io) => {
 
     // receive disconnection data
     socket.on('disconnect', () => {
+      console.log('a user disconnected');
       // splice socket from onlineSocketList
       // [{socketObj}, {socketObj}, {socketObj}]
       onlineSocketList = onlineSocketList.filter(socketObj => socketObj.id !== socket.id);
@@ -206,7 +209,7 @@ module.exports = (io) => {
   function askQuestion() {
     // random question
     const choosedQuestion = quiz[Math.floor(Math.random() * quiz.length)];
-    console.log('choosedQuestion', choosedQuestion);
+    // console.log('choosedQuestion', choosedQuestion);
 
     nowQuiz = Object.assign({}, choosedQuestion);
     // random answer(1,2,3,4)
@@ -231,7 +234,7 @@ module.exports = (io) => {
       uuid: nowQuiz.uuid,
     };
 
-    console.log('nowQuiz', nowQuiz);
+    // console.log('nowQuiz', nowQuiz);
 
     // 發送問題給每個使用者
     io.emit('server_question', questionData);
