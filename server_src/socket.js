@@ -22,7 +22,8 @@ let onlineUserList = [];
 let answeredUserList = [];
 
 // connect mongo db
-mongoose.connect('mongodb://localhost/test');
+const dbURI = process.env.MONGODB_URI || 'mongodb://localhost/quiz_game';
+mongoose.connect(dbURI);
 
 // define model
 const User = mongoose.model('User',

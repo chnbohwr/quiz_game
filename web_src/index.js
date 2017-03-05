@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import NotificationSystem from 'react-notification-system';
 import { Grid, Segment, Modal, Input, Button, Header, Item } from 'semantic-ui-react';
 
-const socket = io('http://localhost:8080/');
+const socket = io();
 
 class App extends React.Component {
 
@@ -129,6 +129,24 @@ class App extends React.Component {
     }
   }
 
+  clickFBLogin = () => {
+    let facebookData;
+    const getAvatar = (avatar) => {
+      facebookData.avatar = avatar.data.url;
+      socket.emit('login', facebookData);
+    };
+    const getProfile = (profile) => {
+      facebookData = profile;
+      window.FB.api('/me/picture', getAvatar);
+    };
+    const loginFBSuccess = () => {
+      window.FB.api('/me', getProfile);
+    };
+    window.FB.login(loginFBSuccess, {
+      scope: 'public_profile,email,user_friends'
+    });
+  }
+
   render() {
     const { isLoginGame, question, myAnswer, answer, chatLog, message } = this.state;
 
@@ -159,11 +177,8 @@ class App extends React.Component {
         {
           !isLoginGame &&
           <Modal dimmer="blurring" open size="small">
-            <Modal.Content>
-              <Input icon="user" fluid iconPosition="left" placeholder="請輸入名稱" onChange={(e) => this.setState({ loginName: e.target.value })} />
-            </Modal.Content>
             <Modal.Actions>
-              <Button positive content="登入" onClick={() => socket.emit('fakeLogin', { name: this.state.loginName })} />
+              <Button primary content="Facebook 登入" onClick={() => this.clickFBLogin()} />
             </Modal.Actions>
           </Modal>
         }
@@ -198,4 +213,25 @@ class App extends React.Component {
   }
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+/**
+ * get facebook sdk
+ */
+window.fbAsyncInit = function () {
+  FB.init({
+    appId: '1633361533588392',
+    xfbml: true,
+    version: 'v2.8'
+  });
+  ReactDOM.render(<App />, document.getElementById('root'));
+};
+
+(function (d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {
+    return;
+  }
+  js = d.createElement(s);
+  js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
