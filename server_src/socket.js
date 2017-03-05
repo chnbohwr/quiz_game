@@ -2,6 +2,8 @@ const uuid = require('node-uuid');
 
 const quiz = require('../quiz.json');
 
+const mongoose = require('mongoose');
+
 let nowQuiz = undefined;
 
 // quiz waitting for answer time
@@ -19,6 +21,17 @@ let onlineUserList = [];
 // 當前回答問題的使用者 facebook_id
 let answeredUserList = [];
 
+// connect mongo db
+mongoose.connect('mongodb://localhost/test');
+
+// define model
+const User = mongoose.model('User',
+  {
+    facebook_id: String,
+    name: String,
+    score: Number,
+  }
+);
 
 // todo fix it
 const sendOnlineUsers = (socket) => {
@@ -41,8 +54,9 @@ const sendNowQuestion = (socket) => {
   socket.emit('server_question', sendData);
 };
 
-const findUserByFBId = (userSocketId) => {
+const findUserBySocketId = (userSocketId) => {
   let userData = onlineUserList.find(userObj => userObj.socket_id === userSocketId);
+
   if (!userData) {
     userData = {
       id: 0,
@@ -79,6 +93,7 @@ module.exports = (io) => {
           facebook_id: socket.facebook_id,
         });
 
+
         // 找到 facebook 帳號踢出列表
         onlineUserList = onlineUserList.filter(userObj => socket.facebook_id !== userObj.id);
       }
@@ -92,9 +107,25 @@ module.exports = (io) => {
 
       if (hasLoginList.length === 0) {
         const userData = Object.assign({}, data);
-        // 先初始化的分數跟最高分
-        userData.score = 0;
-        userData.high_score = 0;
+        // 取得玩家累計分數
+        User.findOne({ facebook_id: data.id }, (err, users) => {
+          if (err) throw err;
+
+          if (users) {
+            userData.score = users.score;
+          } else {
+            // console.log("user not exist, init user data to db");
+            const user = new User({ facebook_id: data.id, name: data.name, score: 0 });
+
+            userData.score = user.score;
+            user.save((error) => {
+              if (err) {
+                console.log(error);
+              }
+            });
+          }
+        });
+
         // 把facebook 資訊放到 socket 裡面
         userData.socket_id = socket.id;
         userData.facebook_id = data.id;
@@ -128,7 +159,6 @@ module.exports = (io) => {
         facebook_id: fbid,
         name: data.name,
         score: 0,
-        high_score: 0,
       };
 
       onlineUserList.push(userData);
@@ -146,7 +176,7 @@ module.exports = (io) => {
     socket.on('chat', (data) => {
       const chatData = Object.assign({}, data);
       chatData.datetime = new Date();
-      chatData.name = findUserByFBId(socket.id).name;
+      chatData.name = findUserBySocketId(socket.id).name;
       io.emit('chat', chatData);
     });
 
@@ -174,8 +204,16 @@ module.exports = (io) => {
 
       // caculate user score
       if (data.answer === nowQuiz.a) {
-        const user = findUserByFBId(socket.facebook_id);
+        const user = findUserBySocketId(socket.id);
         user.score += 1;
+
+        // 把分數存進db
+        const options = { upsert: true, new: true, setDefaultsOnInsert: true };
+        User.findOneAndUpdate({ facebook_id: socket.facebook_id }, { $set: { score: user.score } }, options, (err) => {
+          if (err) {
+            console.log('Something wrong when updating data!');
+          }
+        });
       }
 
       // 告訴大家他選了什麼答案
@@ -187,7 +225,7 @@ module.exports = (io) => {
   });
   // end io.on connection
 
-    // 給解答
+  // 給解答
   function giveAnswer() {
     io.emit('server_answer', {
       a: nowQuiz.a,
@@ -206,7 +244,7 @@ module.exports = (io) => {
   function askQuestion() {
     // random question
     const choosedQuestion = quiz[Math.floor(Math.random() * quiz.length)];
-    console.log('choosedQuestion', choosedQuestion);
+    // console.log('choosedQuestion', choosedQuestion);
 
     nowQuiz = Object.assign({}, choosedQuestion);
     // random answer(1,2,3,4)
@@ -231,7 +269,7 @@ module.exports = (io) => {
       uuid: nowQuiz.uuid,
     };
 
-    console.log('nowQuiz', nowQuiz);
+    // console.log('nowQuiz', nowQuiz);
 
     // 發送問題給每個使用者
     io.emit('server_question', questionData);
